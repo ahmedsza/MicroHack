@@ -61,7 +61,7 @@ export default function Products() {
         [productId]: 0,
       }));
       setStatusMessage({ type: 'success', text: `Added ${quantity} item${quantity === 1 ? '' : 's'} to cart.` });
-    } catch (error) {
+    } catch {
       setStatusMessage({ type: 'error', text: 'Unable to add this item to the cart.' });
     } finally {
       setPendingProductId(null);

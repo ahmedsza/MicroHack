@@ -28,7 +28,7 @@ export default function CartPage() {
       setStatusMessage(null);
       await updateItem(productId, nextQuantity);
       setStatusMessage('Cart updated successfully.');
-    } catch (error) {
+    } catch {
       setStatusMessage('Unable to update this item.');
     } finally {
       setPendingAction(null);
@@ -41,7 +41,7 @@ export default function CartPage() {
       setStatusMessage(null);
       await removeItem(productId);
       setStatusMessage('Item removed from cart.');
-    } catch (error) {
+    } catch {
       setStatusMessage('Unable to remove this item.');
     } finally {
       setPendingAction(null);
