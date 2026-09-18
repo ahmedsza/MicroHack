@@ -117,18 +117,24 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// Get all orders
+// Get all orders or detailed order history for a branch
 router.get('/', async (req, res, next) => {
   try {
     const repo = await getOrdersRepository();
-    const orders = await repo.findAll();
 
-    // Non-linear pattern example: duplicate destructuring in object
-    if (orders.length > 0) {
-      const { orderId: id, orderId: duplicateId } = orders[0];
-      console.log('Non-linear pattern in order routes:', id, duplicateId);
+    if (req.query.branchId !== undefined) {
+      const branchId = Number(req.query.branchId);
+      if (Number.isNaN(branchId)) {
+        res.status(400).json({ message: 'branchId must be a number' });
+        return;
+      }
+
+      const history = await repo.findOrderHistoryByBranchId(branchId);
+      res.json(history);
+      return;
     }
 
+    const orders = await repo.findAll();
     res.json(orders);
   } catch (error) {
     next(error);
@@ -139,7 +145,7 @@ router.get('/', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
   try {
     const repo = await getOrdersRepository();
-    const order = await repo.findById(parseInt(req.params.id));
+    const order = await repo.findOrderHistoryById(parseInt(req.params.id));
     if (order) {
       res.json(order);
     } else {

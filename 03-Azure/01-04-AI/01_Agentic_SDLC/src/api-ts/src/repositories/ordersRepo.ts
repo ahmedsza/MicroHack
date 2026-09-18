@@ -3,7 +3,7 @@
  */
 
 import { getDatabase, DatabaseConnection } from '../db/sqlite';
-import { Order } from '../models/order';
+import { Order, OrderHistory, OrderHistoryItem } from '../models/order';
 import { handleDatabaseError, NotFoundError } from '../utils/errors';
 import { buildInsertSQL, buildUpdateSQL, objectToCamelCase, mapDatabaseRows, DatabaseRow } from '../utils/sql';
 
@@ -153,6 +153,81 @@ export class OrdersRepository {
     } catch (error) {
       handleDatabaseError(error);
     }
+  }
+
+  /**
+   * Find detailed order history for a branch.
+   */
+  async findOrderHistoryByBranchId(branchId: number): Promise<OrderHistory[]> {
+    try {
+      const orders = await this.findByBranchId(branchId);
+      if (orders.length === 0) {
+        return [];
+      }
+
+      const detailedHistory = await Promise.all(
+        orders.map(async (order) => this.buildOrderHistory(order)),
+      );
+
+      return detailedHistory;
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Find one detailed order record by ID.
+   */
+  async findOrderHistoryById(id: number): Promise<OrderHistory | null> {
+    try {
+      const order = await this.findById(id);
+      if (!order) {
+        return null;
+      }
+
+      return this.buildOrderHistory(order);
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Deze functie bouwt een order-history record op met de orderregels en totaalwaarde.
+   */
+  private async buildOrderHistory(order: Order): Promise<OrderHistory> {
+    const rows = await this.db.all<DatabaseRow>(
+      `SELECT od.order_detail_id, od.order_id, od.product_id, od.quantity, od.unit_price, od.notes,
+              p.name, p.description
+       FROM order_details od
+       LEFT JOIN products p ON p.product_id = od.product_id
+       WHERE od.order_id = ?
+       ORDER BY od.order_detail_id`,
+      [order.orderId],
+    );
+
+    const items: OrderHistoryItem[] = rows.map((row) => {
+      const item = objectToCamelCase<Record<string, unknown>>(row);
+      const quantity = Number(item.quantity ?? 0);
+      const unitPrice = Number(item.unitPrice ?? 0);
+      const total = quantity * unitPrice;
+
+      return {
+        orderDetailId: Number(item.orderDetailId ?? 0),
+        productId: Number(item.productId ?? 0),
+        quantity,
+        unitPrice,
+        total,
+        notes: typeof item.notes === 'string' ? item.notes : null,
+        name: typeof item.name === 'string' ? item.name : undefined,
+        description: typeof item.description === 'string' ? item.description : null,
+      };
+    });
+
+    return {
+      ...order,
+      total: items.reduce((sum, item) => sum + item.total, 0),
+      items,
+    };
   }
 }
 

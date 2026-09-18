@@ -38,3 +38,19 @@ export interface Order {
   description: string;
   status: string;
 }
+
+export interface OrderHistoryItem {
+  orderDetailId: number;
+  productId: number;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  notes?: string | null;
+  name?: string;
+  description?: string | null;
+}
+
+export interface OrderHistory extends Order {
+  total: number;
+  items: OrderHistoryItem[];
+}

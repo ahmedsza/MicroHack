@@ -36,6 +36,7 @@ export const api = {
     products: '/api/products',
     suppliers: '/api/suppliers',
     orders: '/api/orders',
+    orderHistory: '/api/orders?branchId=1',
     branches: '/api/branches',
     headquarters: '/api/headquarters',
     deliveries: '/api/deliveries',
