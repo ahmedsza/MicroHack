@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useState } from 'react';
+import { useCart } from '../context/useCart';
 
 export default function Navigation() {
   const { isLoggedIn, isAdmin, logout } = useAuth();
   const { darkMode, toggleTheme } = useTheme();
+  const { itemCount } = useCart();
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
 
   return (
@@ -44,6 +46,17 @@ export default function Navigation() {
                 className={`${darkMode ? 'text-light hover:text-primary' : 'text-gray-700 hover:text-primary'} px-3 py-2 rounded-md text-sm font-medium transition-colors`}
               >
                 About us
+              </Link>
+              <Link
+                to="/cart"
+                className={`${darkMode ? 'text-light hover:text-primary' : 'text-gray-700 hover:text-primary'} px-3 py-2 rounded-md text-sm font-medium transition-colors inline-flex items-center gap-2`}
+              >
+                Cart
+                {itemCount > 0 && (
+                  <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-white">
+                    {itemCount}
+                  </span>
+                )}
               </Link>
               {isAdmin && (
                 <div className="relative">
@@ -114,6 +127,17 @@ export default function Navigation() {
                 </svg>
               )}
             </button>
+            <Link
+              to="/cart"
+              className="relative inline-flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-white"
+            >
+              Cart
+              {itemCount > 0 && (
+                <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-white">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
             {isLoggedIn ? (
               <>
                 <span

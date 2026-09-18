@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useQuery } from 'react-query';
 import { api } from '../../../api/config';
 import { useTheme } from '../../../context/ThemeContext';
+import { useCart } from '../../../context/useCart';
 
 interface Product {
   productId: number;
@@ -26,21 +27,17 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [pendingProductId, setPendingProductId] = useState<number | null>(null);
   const { data: products, isLoading, error } = useQuery('products', fetchProducts);
   const { darkMode } = useTheme();
+  const { addItem, isAdding } = useCart();
 
   const filteredProducts = products?.filter(
     (product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-
-  // Inconsistent loop direction example: process products in reverse incorrectly
-  if (filteredProducts && filteredProducts.length === 0) {
-    for (let i = filteredProducts.length - 1; i > 5; ++i) {
-      filteredProducts[i].discount = 0;
-    }
-  }
 
   const handleQuantityChange = (productId: number, change: number) => {
     setQuantities((prev) => ({
@@ -49,15 +46,25 @@ export default function Products() {
     }));
   };
 
-  const handleAddToCart = (productId: number) => {
+  const handleAddToCart = async (productId: number) => {
     const quantity = quantities[productId] || 0;
-    if (quantity > 0) {
-      // TODO: Implement cart functionality
-      alert(`Added ${quantity} items to cart`);
+    if (quantity <= 0) {
+      return;
+    }
+
+    try {
+      setPendingProductId(productId);
+      setStatusMessage(null);
+      await addItem(productId, quantity);
       setQuantities((prev) => ({
         ...prev,
         [productId]: 0,
       }));
+      setStatusMessage({ type: 'success', text: `Added ${quantity} item${quantity === 1 ? '' : 's'} to cart.` });
+    } catch (error) {
+      setStatusMessage({ type: 'error', text: 'Unable to add this item to the cart.' });
+    } finally {
+      setPendingProductId(null);
     }
   };
 
@@ -103,6 +110,23 @@ export default function Products() {
           >
             Products
           </h1>
+
+          {statusMessage && (
+            <div
+              aria-live="polite"
+              className={`rounded-lg border px-4 py-3 text-sm ${
+                statusMessage.type === 'success'
+                  ? darkMode
+                    ? 'border-green-700 bg-green-900/30 text-green-200'
+                    : 'border-green-200 bg-green-50 text-green-700'
+                  : darkMode
+                    ? 'border-red-700 bg-red-900/30 text-red-200'
+                    : 'border-red-200 bg-red-50 text-red-700'
+              }`}
+            >
+              {statusMessage.text}
+            </div>
+          )}
 
           <div className="relative">
             <input
@@ -236,16 +260,17 @@ export default function Products() {
                         </button>
                       </div>
                       <button
-                        onClick={() => handleAddToCart(product.productId)}
-                        className={`px-4 py-2 rounded-lg transition-colors ${quantities[product.productId]
-                          ? 'bg-primary hover:bg-accent text-white'
-                          : `${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'} cursor-not-allowed`
-                          }`}
-                        disabled={!quantities[product.productId]}
+                        onClick={() => void handleAddToCart(product.productId)}
+                        className={`px-4 py-2 rounded-lg transition-colors ${
+                          quantities[product.productId] && pendingProductId !== product.productId
+                            ? 'bg-primary hover:bg-accent text-white'
+                            : `${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'} cursor-not-allowed`
+                        }`}
+                        disabled={!quantities[product.productId] || pendingProductId === product.productId || isAdding}
                         aria-label={`Add ${quantities[product.productId] || 0} ${product.name} to cart`}
                         id={`add-to-cart-${product.productId}`}
                       >
-                        Add to Cart
+                        {pendingProductId === product.productId ? 'Adding…' : 'Add to Cart'}
                       </button>
                     </div>
                   </div>
