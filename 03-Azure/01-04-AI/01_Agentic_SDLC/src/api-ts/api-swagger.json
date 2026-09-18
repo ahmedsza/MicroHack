@@ -164,6 +164,203 @@
                 }
             }
         },
+        "/api/carts": {
+            "post": {
+                "summary": "Create an empty cart",
+                "tags": [
+                    "Carts"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Cart created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cart"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/carts/{cartId}": {
+            "get": {
+                "summary": "Get a cart aggregate",
+                "tags": [
+                    "Carts"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "cartId",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cart aggregate",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cart"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid cart ID"
+                    },
+                    "404": {
+                        "description": "Cart not found"
+                    }
+                }
+            }
+        },
+        "/api/carts/{cartId}/items": {
+            "post": {
+                "summary": "Add a product or increment its existing cart quantity",
+                "tags": [
+                    "Carts"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "cartId",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddCartItemRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated cart aggregate",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cart"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "404": {
+                        "description": "Cart or product not found"
+                    }
+                }
+            }
+        },
+        "/api/carts/{cartId}/items/{productId}": {
+            "put": {
+                "summary": "Replace a cart line quantity",
+                "tags": [
+                    "Carts"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "cartId",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "productId",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCartItemRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated cart aggregate",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cart"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "404": {
+                        "description": "Cart line not found"
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Remove a product from a cart",
+                "tags": [
+                    "Carts"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "cartId",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "productId",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Cart line removed"
+                    },
+                    "400": {
+                        "description": "Invalid path ID"
+                    },
+                    "404": {
+                        "description": "Cart or cart line not found"
+                    }
+                }
+            }
+        },
         "/api/deliveries": {
             "get": {
                 "summary": "Returns all deliveries",
@@ -1482,6 +1679,112 @@
                     }
                 }
             },
+            "CartItem": {
+                "type": "object",
+                "required": [
+                    "cartItemId",
+                    "productId",
+                    "name",
+                    "imgName",
+                    "quantity",
+                    "unitPrice",
+                    "lineTotal"
+                ],
+                "properties": {
+                    "cartItemId": {
+                        "type": "integer"
+                    },
+                    "productId": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "imgName": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "unitPrice": {
+                        "type": "number",
+                        "format": "double",
+                        "minimum": 0
+                    },
+                    "lineTotal": {
+                        "type": "number",
+                        "format": "double",
+                        "minimum": 0
+                    }
+                }
+            },
+            "Cart": {
+                "type": "object",
+                "required": [
+                    "cartId",
+                    "createdAt",
+                    "items",
+                    "itemCount",
+                    "total"
+                ],
+                "properties": {
+                    "cartId": {
+                        "type": "integer"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CartItem"
+                        }
+                    },
+                    "itemCount": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "total": {
+                        "type": "number",
+                        "format": "double",
+                        "minimum": 0
+                    }
+                }
+            },
+            "AddCartItemRequest": {
+                "type": "object",
+                "required": [
+                    "productId",
+                    "quantity"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "productId": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            },
+            "UpdateCartItemRequest": {
+                "type": "object",
+                "required": [
+                    "quantity"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "quantity": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            },
             "Delivery": {
                 "type": "object",
                 "required": [
@@ -1778,6 +2081,10 @@
         {
             "name": "Branches",
             "description": "API endpoints for managing branches"
+        },
+        {
+            "name": "Carts",
+            "description": "API endpoints for persistent shopping carts"
         },
         {
             "name": "Deliveries",

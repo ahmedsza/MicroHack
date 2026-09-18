@@ -58,3 +58,8 @@ async def startup() -> None:
 @app.get("/")
 async def root() -> str:
     return "Hello, world!"
+
+
+@app.get("/demotest")
+async def demotest() -> str:
+    return "this is a test"

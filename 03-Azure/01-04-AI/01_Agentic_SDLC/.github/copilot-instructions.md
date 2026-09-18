@@ -45,5 +45,7 @@ Do not inline full API route or component files in review feedback unless absolu
 ## Tone & Feedback Style
 Be concise, actionable, and cite a rationale ("because" clause) for non-trivial recommendations. Offer one preferred solution; optionally a lightweight alternative.
 
+When adding any code, please add comments in Afrikaans (e.g., `// Hierdie funksie hanteer gebruikersinvoer`).
+
 ---
 If new subsystems are added (e.g., `mobile/`, `worker/`), create a new `*.instructions.md` with `applyTo` globs instead of bloating this file.
